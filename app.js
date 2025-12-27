@@ -40,7 +40,7 @@ function calculateClientTotal(clienteId) {
   return total;
 }
 
-// ---------- ENFOQUE 90 MIN ----------
+// ---------- ENFOQUE ----------
 
 function calculateFocusReport() {
   const { blocks } = getCurrentState();
@@ -70,17 +70,17 @@ function calculateFocusReport() {
 function showFocusReport() {
   const r = calculateFocusReport();
   alert(
-    `🎯 Enfoque (últimos 90 min)\n\n` +
-    `🟦 Trabajo: ${formatTime(r.totals.trabajo)}\n` +
-    `📞 Teléfono: ${formatTime(r.totals.telefono)}\n` +
-    `👥 Cliente: ${formatTime(r.totals.cliente)}\n` +
-    `📖 Estudio: ${formatTime(r.totals.estudio)}\n` +
-    `⚙️ Otros: ${formatTime(r.totals.otros)}\n\n` +
-    `Trabajo: ${r.workPct} %\nEstado: ${r.status}`
+    `🎯 Enfoque (90 min)\n\n` +
+    `Trabajo: ${formatTime(r.totals.trabajo)}\n` +
+    `Teléfono: ${formatTime(r.totals.telefono)}\n` +
+    `Cliente: ${formatTime(r.totals.cliente)}\n` +
+    `Estudio: ${formatTime(r.totals.estudio)}\n` +
+    `Otros: ${formatTime(r.totals.otros)}\n\n` +
+    `Trabajo: ${r.workPct}%\nEstado: ${r.status}`
   );
 }
 
-// ---------- REPORTE DIARIO (TEXTO BASE) ----------
+// ---------- REPORTE DIARIO ----------
 
 function buildDailyReportText() {
   const { blocks, clients } = getCurrentState();
@@ -107,47 +107,44 @@ function buildDailyReportText() {
     const client = clients.find(c => c.id === b.cliente_id);
     if (!client) return;
 
-    const name = client.nombre.trim();
-    byClient[name] = (byClient[name] || 0) + duration;
+    byClient[client.nombre] =
+      (byClient[client.nombre] || 0) + duration;
   });
 
-  let msg = `Reporte diario\n`;
-  msg += `${now.toLocaleDateString()}\n\n`;
+  let txt = `REPORTE DIARIO\n${now.toLocaleDateString()}\n\n`;
 
   const totalDay = Object.values(byActivity)
     .reduce((a, b) => a + b, 0);
 
-  msg += `Total: ${formatTime(totalDay)}\n\n`;
-
-  msg += `Por cliente:\n`;
-  Object.entries(byClient).forEach(([name, time]) => {
-    msg += `- ${name}: ${formatTime(time)}\n`;
+  txt += `Total: ${formatTime(totalDay)}\n\nPor cliente:\n`;
+  Object.entries(byClient).forEach(([n, t]) => {
+    txt += `- ${n}: ${formatTime(t)}\n`;
   });
 
-  msg += `\nPor actividad:\n`;
-  msg += `Trabajo: ${formatTime(byActivity.trabajo)}\n`;
-  msg += `Teléfono: ${formatTime(byActivity.telefono)}\n`;
-  msg += `Cliente: ${formatTime(byActivity.cliente)}\n`;
-  msg += `Estudio: ${formatTime(byActivity.estudio)}\n`;
-  msg += `Otros: ${formatTime(byActivity.otros)}\n`;
+  txt += `\nPor actividad:\n`;
+  Object.entries(byActivity).forEach(([a, t]) => {
+    txt += `${a}: ${formatTime(t)}\n`;
+  });
 
-  return msg;
+  return txt;
 }
 
 function showDailyReport() {
   alert(buildDailyReportText());
 }
 
-// ---------- PDF ----------
+// ---------- DESCARGA ROBUSTA ----------
 
-function generateDailyPdf(text) {
-  const blob = new Blob([text], { type: "application/pdf" });
+function downloadReportFile(text) {
+  const blob = new Blob([text], { type: "text/plain" });
   const url = URL.createObjectURL(blob);
 
   const a = document.createElement("a");
   a.href = url;
-  a.download = `reporte-${new Date().toISOString().slice(0,10)}.pdf`;
+  a.download = `reporte-${new Date().toISOString().slice(0,10)}.txt`;
+  document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
 
   URL.revokeObjectURL(url);
 }
@@ -161,19 +158,6 @@ function updateUI() {
   clientNameEl.textContent = client
     ? `Cliente: ${client.nombre}`
     : "Sin cliente activo";
-
-  activityNameEl.textContent = state.currentBlockId
-    ? `Actividad activa`
-    : "—";
-
-  activityButtons.forEach(btn => {
-    btn.classList.toggle(
-      "active",
-      state.currentBlockId &&
-      btn.dataset.activity ===
-      getCurrentState().blocks.find(b => b.id === state.currentBlockId)?.actividad
-    );
-  });
 
   if (timerInterval) clearInterval(timerInterval);
 
@@ -197,44 +181,37 @@ activityButtons.forEach(btn => {
   });
 });
 
-document.getElementById("newClient").addEventListener("click", () => {
-  const name = prompt("Nombre corto del cliente:");
-  if (name) {
-    newClient(name.trim());
+document.getElementById("newClient").onclick = () => {
+  const n = prompt("Nombre cliente:");
+  if (n) {
+    newClient(n.trim());
     updateUI();
   }
-});
+};
 
-document.getElementById("changeClient").addEventListener("click", () => {
+document.getElementById("changeClient").onclick = () => {
   const { clients } = getCurrentState();
   const open = clients.filter(c => c.estado === "abierto");
   if (!open.length) return;
 
-  let msg = "Cliente:\n\n";
-  open.forEach((c, i) => msg += `${i + 1}. ${c.nombre}\n`);
-  const sel = parseInt(prompt(msg), 10) - 1;
-
-  if (open[sel]) {
-    changeClient(open[sel].id);
+  let m = "Cliente:\n";
+  open.forEach((c, i) => m += `${i+1}. ${c.nombre}\n`);
+  const s = parseInt(prompt(m), 10) - 1;
+  if (open[s]) {
+    changeClient(open[s].id);
     updateUI();
   }
-});
+};
 
-document.getElementById("closeClient").addEventListener("click", () => {
+document.getElementById("closeClient").onclick = () => {
   closeClient();
   updateUI();
-});
+};
 
-document.getElementById("focusReport")
-  .addEventListener("click", showFocusReport);
+document.getElementById("focusReport").onclick = showFocusReport;
+document.getElementById("dailyReport").onclick = showDailyReport;
+document.getElementById("dailyPdf").onclick = () => {
+  downloadReportFile(buildDailyReportText());
+};
 
-document.getElementById("dailyReport")
-  .addEventListener("click", showDailyReport);
-
-document.getElementById("dailyPdf")
-  .addEventListener("click", () => {
-    generateDailyPdf(buildDailyReportText());
-  });
-
-// ---------- INICIO ----------
 updateUI();
