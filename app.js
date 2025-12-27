@@ -133,20 +133,17 @@ function showDailyReport() {
   alert(buildDailyReportText());
 }
 
-// ---------- DESCARGA ROBUSTA ----------
+// ---------- APERTURA ROBUSTA DE ARCHIVO ----------
 
-function downloadReportFile(text) {
-  const blob = new Blob([text], { type: "text/plain" });
+function openReportInNewTab(text) {
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
   const url = URL.createObjectURL(blob);
 
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `reporte-${new Date().toISOString().slice(0,10)}.txt`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  // Abrimos en nueva pestaña: Android permite guardar desde ahí
+  window.open(url, "_blank");
 
-  URL.revokeObjectURL(url);
+  // No revocamos inmediatamente para que el navegador lo use
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 
 // ---------- UI ----------
@@ -175,10 +172,10 @@ function updateUI() {
 // ---------- EVENTOS ----------
 
 activityButtons.forEach(btn => {
-  btn.addEventListener("click", () => {
+  btn.onclick = () => {
     changeActivity(btn.dataset.activity);
     updateUI();
-  });
+  };
 });
 
 document.getElementById("newClient").onclick = () => {
@@ -211,7 +208,7 @@ document.getElementById("closeClient").onclick = () => {
 document.getElementById("focusReport").onclick = showFocusReport;
 document.getElementById("dailyReport").onclick = showDailyReport;
 document.getElementById("dailyPdf").onclick = () => {
-  downloadReportFile(buildDailyReportText());
+  openReportInNewTab(buildDailyReportText());
 };
 
 updateUI();
