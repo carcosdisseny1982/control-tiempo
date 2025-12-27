@@ -15,6 +15,34 @@ const ACTIVITY_LABELS = {
   otros: "Otros"
 };
 
+/* ===== TRABAJADOR (UNA SOLA VEZ) ===== */
+function getWorkerName() {
+  let name = localStorage.getItem("focowork_worker_name");
+
+  if (!name) {
+    name = prompt(
+      "Nombre del trabajador:\n(se usará en los reportes)"
+    );
+    if (name) {
+      name = name.trim();
+      localStorage.setItem("focowork_worker_name", name);
+    } else {
+      name = "trabajador";
+    }
+  }
+
+  return name;
+}
+
+function safeName(str) {
+  return str
+    .toLowerCase()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-z0-9_]/g, "");
+}
+
+const WORKER_NAME = getWorkerName();
+
 /* ===== ELEMENTOS UI ===== */
 const clientNameEl = document.getElementById("clientName");
 const activityNameEl = document.getElementById("activityName");
@@ -135,50 +163,10 @@ document.getElementById("closeClient").onclick = () => {
   updateUI(null);
 };
 
-/* ===== 🎯 ENFOQUE (SOLO REPORTE, SIN AVISOS AUTOMÁTICOS) ===== */
-if (focusBtn) {
-  focusBtn.onclick = () => {
-    const { blocks } = getCurrentState();
-    const now = Date.now();
-    const start = now - FOCUS_WINDOW_MS;
-
-    const totals = {
-      trabajo: 0,
-      telefono: 0,
-      cliente: 0,
-      estudio: 0,
-      otros: 0
-    };
-
-    blocks.forEach(b => {
-      const s = Math.max(b.inicio, start);
-      const e = Math.min(b.fin ?? now, now);
-      if (e > s && totals[b.actividad] !== undefined) {
-        totals[b.actividad] += e - s;
-      }
-    });
-
-    const total = Object.values(totals).reduce((a, b) => a + b, 0);
-    const pct = total ? Math.round((totals.trabajo / total) * 100) : 0;
-
-    let estado = "🟢 Enfocado";
-    if (pct < 40) estado = "🔴 Disperso";
-    else if (pct < 65) estado = "🟡 Atención";
-
-    alert(
-      `🎯 Enfoque (90 min)\n\n` +
-      Object.entries(totals)
-        .map(([k, v]) => `${ACTIVITY_LABELS[k]}: ${formatTime(v)}`)
-        .join("\n") +
-      `\n\nTrabajo: ${pct}%\nEstado: ${estado}`
-    );
-  };
-}
-
-/* ===== 📅 HOY (TXT DESCARGA DIRECTA) ===== */
+/* ===== 📅 HOY (TXT CON NOMBRE DE TRABAJADOR) ===== */
 if (todayBtn) {
   todayBtn.onclick = () => {
-    const { blocks, clients } = getCurrentState();
+    const { blocks } = getCurrentState();
     const now = new Date();
     const startDay = new Date(
       now.getFullYear(),
@@ -193,16 +181,16 @@ if (todayBtn) {
       const e = Math.min(b.fin ?? Date.now(), Date.now());
       if (e <= s) return;
 
-      const client = clients.find(c => c.id === b.cliente_id);
-      if (!client) return;
-
-      byClient[client.nombre] =
-        (byClient[client.nombre] || 0) + (e - s);
+      byClient[b.cliente_id] =
+        (byClient[b.cliente_id] || 0) + (e - s);
     });
 
-    let txt = `REPORTE DIARIO - FocoWork\n${now.toLocaleDateString()}\n\n`;
-    Object.entries(byClient).forEach(([n, t]) => {
-      txt += `${n}: ${formatTime(t)}\n`;
+    let txt = `REPORTE DIARIO - FocoWork\n`;
+    txt += `Trabajador: ${WORKER_NAME}\n`;
+    txt += `Fecha: ${now.toLocaleDateString()}\n\n`;
+
+    Object.entries(byClient).forEach(([id, t]) => {
+      txt += `Cliente ${id}: ${formatTime(t)}\n`;
     });
 
     const blob = new Blob([txt], { type: "text/plain;charset=utf-8" });
@@ -210,7 +198,7 @@ if (todayBtn) {
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = `focowork-${now.toISOString().slice(0,10)}.txt`;
+    a.download = `focowork-${safeName(WORKER_NAME)}-${now.toISOString().slice(0,10)}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
