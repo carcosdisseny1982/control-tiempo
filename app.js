@@ -12,25 +12,25 @@ const activityButtons = document.querySelectorAll(".activity");
 
 let timerInterval = null;
 
-// ---------- UTILIDADES ----------
+// ---------- UTIL ----------
 
 function formatTime(ms) {
-  const totalSeconds = Math.floor(ms / 1000);
-  const h = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
-  const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
-  const s = String(totalSeconds % 60).padStart(2, "0");
-  return `${h}:${m}:${s}`;
+  const s = Math.floor(ms / 1000);
+  const h = String(Math.floor(s / 3600)).padStart(2, "0");
+  const m = String(Math.floor((s % 3600) / 60)).padStart(2, "0");
+  const sec = String(s % 60).padStart(2, "0");
+  return `${h}:${m}:${sec}`;
 }
 
 // ---------- TOTAL CLIENTE ----------
 
-function calculateClientTotal(clienteId) {
+function calculateClientTotal(clientId) {
   const { blocks } = getCurrentState();
   const now = Date.now();
   let total = 0;
 
   blocks.forEach(b => {
-    if (b.cliente_id === clienteId) {
+    if (b.cliente_id === clientId) {
       total += (b.fin ?? now) - b.inicio;
     }
   });
@@ -63,7 +63,7 @@ function updateUI() {
 
 // ---------- EVENTOS ----------
 
-// BOTONES DE ACTIVIDAD (SIN BLOQUEOS)
+// ACTIVIDADES (SIN BLOQUEOS)
 activityButtons.forEach(btn => {
   btn.onclick = () => {
     changeActivity(btn.dataset.activity);
@@ -73,9 +73,9 @@ activityButtons.forEach(btn => {
 
 // NUEVO CLIENTE
 document.getElementById("newClient").onclick = () => {
-  const n = prompt("Nombre cliente:");
-  if (n) {
-    newClient(n.trim());
+  const name = prompt("Nombre del cliente:");
+  if (name) {
+    newClient(name.trim());
     updateUI();
   }
 };
@@ -86,11 +86,11 @@ document.getElementById("changeClient").onclick = () => {
   const open = clients.filter(c => c.estado === "abierto");
   if (!open.length) return;
 
-  let m = "Cliente:\n";
-  open.forEach((c, i) => m += `${i + 1}. ${c.nombre}\n`);
-  const s = parseInt(prompt(m), 10) - 1;
-  if (open[s]) {
-    changeClient(open[s].id);
+  let msg = "Cliente:\n";
+  open.forEach((c, i) => msg += `${i + 1}. ${c.nombre}\n`);
+  const sel = parseInt(prompt(msg), 10) - 1;
+  if (open[sel]) {
+    changeClient(open[sel].id);
     updateUI();
   }
 };
