@@ -6,7 +6,7 @@
 }
 
 body {
-  background-color: #f4f6f8;
+  background: #f4f6f8;
   padding: 12px;
 }
 
@@ -23,7 +23,7 @@ header {
 #timer {
   font-size: 32px;
   font-weight: bold;
-  margin: 12px 0;
+  margin-top: 8px;
 }
 
 .activities {
@@ -33,11 +33,11 @@ header {
 }
 
 .activity {
-  background-color: #0d6efd;
+  background: #0d6efd;
   color: #fff;
   border: none;
   border-radius: 14px;
-  padding: 16px 10px;
+  padding: 16px 8px;
   font-size: 15px;
   cursor: pointer;
 }
@@ -46,22 +46,19 @@ header {
   transform: scale(0.97);
 }
 
-.actions,
-.reports {
+.actions {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
-  margin-top: 12px;
+  margin-top: 14px;
 }
 
-.action,
-.report {
-  background-color: #ffffff;
+.action {
+  background: #ffffff;
   color: #0d6efd;
   border: 2px solid #0d6efd;
   border-radius: 14px;
-  padding: 14px 10px;
+  padding: 14px 8px;
   font-size: 14px;
-  text-align: center;
   cursor: pointer;
 }
