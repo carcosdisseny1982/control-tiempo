@@ -40,20 +40,16 @@ header {
   margin-top: 16px;
 }
 
-/* 🔵 TODOS AZULES */
+/* BOTONES BASE */
 .activity {
-  background: #0d6efd;
-  color: #fff;
+  background-color: #0d6efd;
+  color: #ffffff;
   border: none;
   border-radius: 16px;
   padding: 16px 10px;
   font-size: 15px;
   cursor: pointer;
-}
-
-/* ⚫ TRABAJO EN REPOSO */
-.activity.trabajo {
-  background: #333;
+  transition: background-color 0.15s ease, transform 0.1s ease;
 }
 
 /* feedback táctil */
@@ -61,6 +57,12 @@ header {
   transform: scale(0.97);
 }
 
+/* BOTÓN SELECCIONADO */
+.activity.selected {
+  background-color: #0a58ca;
+}
+
+/* ACCIONES */
 .actions {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -75,12 +77,15 @@ header {
   border-radius: 14px;
   padding: 14px 8px;
   font-size: 14px;
-  }
+  cursor: pointer;
+}
+
+/* REPORTES */
 .reports {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 10px;
-  margin-top: 14px;
+  margin-top: 16px;
 }
 
 .reports button {
@@ -90,4 +95,5 @@ header {
   border-radius: 14px;
   padding: 14px 8px;
   font-size: 14px;
+  cursor: pointer;
 }
