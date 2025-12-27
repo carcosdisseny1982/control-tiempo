@@ -80,12 +80,16 @@ function showFocusReport() {
   );
 }
 
-// ---------- REPORTE DIARIO ----------
+// ---------- REPORTE DIARIO (TEXTO BASE) ----------
 
-function showDailyReport() {
+function buildDailyReportText() {
   const { blocks, clients } = getCurrentState();
   const now = new Date();
-  const startDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const startDay = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate()
+  ).getTime();
 
   const byClient = {};
   const byActivity = {
@@ -102,12 +106,17 @@ function showDailyReport() {
 
     const client = clients.find(c => c.id === b.cliente_id);
     if (!client) return;
-    byClient[client.nombre] = (byClient[client.nombre] || 0) + duration;
+
+    const name = client.nombre.trim();
+    byClient[name] = (byClient[name] || 0) + duration;
   });
 
-  let msg = `📅 Reporte de hoy\n\n`;
+  let msg = `Reporte diario\n`;
+  msg += `${now.toLocaleDateString()}\n\n`;
 
-  const totalDay = Object.values(byActivity).reduce((a, b) => a + b, 0);
+  const totalDay = Object.values(byActivity)
+    .reduce((a, b) => a + b, 0);
+
   msg += `Total: ${formatTime(totalDay)}\n\n`;
 
   msg += `Por cliente:\n`;
@@ -116,34 +125,53 @@ function showDailyReport() {
   });
 
   msg += `\nPor actividad:\n`;
-  msg += `🟦 Trabajo: ${formatTime(byActivity.trabajo)}\n`;
-  msg += `📞 Teléfono: ${formatTime(byActivity.telefono)}\n`;
-  msg += `👥 Cliente: ${formatTime(byActivity.cliente)}\n`;
-  msg += `📖 Estudio: ${formatTime(byActivity.estudio)}\n`;
-  msg += `⚙️ Otros: ${formatTime(byActivity.otros)}\n`;
+  msg += `Trabajo: ${formatTime(byActivity.trabajo)}\n`;
+  msg += `Teléfono: ${formatTime(byActivity.telefono)}\n`;
+  msg += `Cliente: ${formatTime(byActivity.cliente)}\n`;
+  msg += `Estudio: ${formatTime(byActivity.estudio)}\n`;
+  msg += `Otros: ${formatTime(byActivity.otros)}\n`;
 
-  alert(msg);
+  return msg;
+}
+
+function showDailyReport() {
+  alert(buildDailyReportText());
+}
+
+// ---------- PDF ----------
+
+function generateDailyPdf(text) {
+  const blob = new Blob([text], { type: "application/pdf" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `reporte-${new Date().toISOString().slice(0,10)}.pdf`;
+  a.click();
+
+  URL.revokeObjectURL(url);
 }
 
 // ---------- UI ----------
 
 function updateUI() {
-  const { state, clients, blocks } = getCurrentState();
+  const { state, clients } = getCurrentState();
   const client = clients.find(c => c.id === state.currentClientId);
-  const block = blocks.find(b => b.id === state.currentBlockId);
 
   clientNameEl.textContent = client
     ? `Cliente: ${client.nombre}`
     : "Sin cliente activo";
 
-  activityNameEl.textContent = block
-    ? `Actividad: ${block.actividad}`
+  activityNameEl.textContent = state.currentBlockId
+    ? `Actividad activa`
     : "—";
 
   activityButtons.forEach(btn => {
     btn.classList.toggle(
       "active",
-      block && btn.dataset.activity === block.actividad
+      state.currentBlockId &&
+      btn.dataset.activity ===
+      getCurrentState().blocks.find(b => b.id === state.currentBlockId)?.actividad
     );
   });
 
@@ -202,6 +230,11 @@ document.getElementById("focusReport")
 
 document.getElementById("dailyReport")
   .addEventListener("click", showDailyReport);
+
+document.getElementById("dailyPdf")
+  .addEventListener("click", () => {
+    generateDailyPdf(buildDailyReportText());
+  });
 
 // ---------- INICIO ----------
 updateUI();
