@@ -23,6 +23,20 @@ function formatTime(ms) {
   return `${h}:${m}:${s}`;
 }
 
+function getTotalTimeForClient(clienteId, blocks) {
+  let total = 0;
+  const now = Date.now();
+
+  blocks.forEach(block => {
+    if (block.cliente_id === clienteId) {
+      const end = block.fin ? block.fin : now;
+      total += end - block.inicio;
+    }
+  });
+
+  return total;
+}
+
 function updateUI() {
   const { state, clients, blocks } = getCurrentState();
 
@@ -46,9 +60,10 @@ function updateUI() {
 
   if (timerInterval) clearInterval(timerInterval);
 
-  if (block) {
+  if (client) {
     timerInterval = setInterval(() => {
-      timerEl.textContent = formatTime(Date.now() - block.inicio);
+      const totalMs = getTotalTimeForClient(client.id, blocks);
+      timerEl.textContent = formatTime(totalMs);
     }, 1000);
   } else {
     timerEl.textContent = "00:00:00";
@@ -74,7 +89,7 @@ document.getElementById("newClient").addEventListener("click", () => {
   }
 });
 
-// ---------- CAMBIAR CLIENTE (ARREGLADO) ----------
+// ---------- CAMBIAR CLIENTE ----------
 
 document.getElementById("changeClient").addEventListener("click", () => {
   const { clients } = getCurrentState();
