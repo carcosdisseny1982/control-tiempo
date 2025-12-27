@@ -24,6 +24,8 @@ function formatTime(ms) {
   return `${h}:${m}:${s}`;
 }
 
+// ---------- TOTAL CLIENTE ----------
+
 function calculateClientTotal(clienteId) {
   const { blocks } = getCurrentState();
   const now = Date.now();
@@ -31,8 +33,7 @@ function calculateClientTotal(clienteId) {
 
   blocks.forEach(b => {
     if (b.cliente_id === clienteId) {
-      const end = b.fin ?? now;
-      total += end - b.inicio;
+      total += (b.fin ?? now) - b.inicio;
     }
   });
 
@@ -47,51 +48,79 @@ function calculateFocusReport() {
   const startWindow = now - FOCUS_WINDOW_MS;
 
   const totals = {
-    trabajo: 0,
-    telefono: 0,
-    cliente: 0,
-    estudio: 0,
-    otros: 0
+    trabajo: 0, telefono: 0, cliente: 0, estudio: 0, otros: 0
   };
 
   blocks.forEach(b => {
     const start = Math.max(b.inicio, startWindow);
     const end = Math.min(b.fin ?? now, now);
-
-    if (end > start) {
-      totals[b.actividad] += end - start;
-    }
+    if (end > start) totals[b.actividad] += end - start;
   });
 
-  const totalTime =
-    totals.trabajo +
-    totals.telefono +
-    totals.cliente +
-    totals.estudio +
-    totals.otros;
-
-  const workPct = totalTime
-    ? Math.round((totals.trabajo / totalTime) * 100)
-    : 0;
+  const totalTime = Object.values(totals).reduce((a, b) => a + b, 0);
+  const workPct = totalTime ? Math.round((totals.trabajo / totalTime) * 100) : 0;
 
   let status = "🟢 Enfocado";
   if (workPct < 40) status = "🔴 Dispersión";
   else if (workPct < 65) status = "🟡 Atención";
 
-  return { totals, totalTime, workPct, status };
+  return { totals, workPct, status };
 }
 
 function showFocusReport() {
   const r = calculateFocusReport();
+  alert(
+    `🎯 Enfoque (últimos 90 min)\n\n` +
+    `🟦 Trabajo: ${formatTime(r.totals.trabajo)}\n` +
+    `📞 Teléfono: ${formatTime(r.totals.telefono)}\n` +
+    `👥 Cliente: ${formatTime(r.totals.cliente)}\n` +
+    `📖 Estudio: ${formatTime(r.totals.estudio)}\n` +
+    `⚙️ Otros: ${formatTime(r.totals.otros)}\n\n` +
+    `Trabajo: ${r.workPct} %\nEstado: ${r.status}`
+  );
+}
 
-  let msg = "🎯 Enfoque (últimos 90 min)\n\n";
-  msg += `🟦 Trabajo: ${formatTime(r.totals.trabajo)}\n`;
-  msg += `📞 Teléfono: ${formatTime(r.totals.telefono)}\n`;
-  msg += `👥 Cliente: ${formatTime(r.totals.cliente)}\n`;
-  msg += `📖 Estudio: ${formatTime(r.totals.estudio)}\n`;
-  msg += `⚙️ Otros: ${formatTime(r.totals.otros)}\n\n`;
-  msg += `Trabajo: ${r.workPct} %\n`;
-  msg += `Estado: ${r.status}`;
+// ---------- REPORTE DIARIO ----------
+
+function showDailyReport() {
+  const { blocks, clients } = getCurrentState();
+  const now = new Date();
+  const startDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+  const byClient = {};
+  const byActivity = {
+    trabajo: 0, telefono: 0, cliente: 0, estudio: 0, otros: 0
+  };
+
+  blocks.forEach(b => {
+    const start = Math.max(b.inicio, startDay);
+    const end = Math.min(b.fin ?? Date.now(), Date.now());
+    if (end <= start) return;
+
+    const duration = end - start;
+    byActivity[b.actividad] += duration;
+
+    const client = clients.find(c => c.id === b.cliente_id);
+    if (!client) return;
+    byClient[client.nombre] = (byClient[client.nombre] || 0) + duration;
+  });
+
+  let msg = `📅 Reporte de hoy\n\n`;
+
+  const totalDay = Object.values(byActivity).reduce((a, b) => a + b, 0);
+  msg += `Total: ${formatTime(totalDay)}\n\n`;
+
+  msg += `Por cliente:\n`;
+  Object.entries(byClient).forEach(([name, time]) => {
+    msg += `- ${name}: ${formatTime(time)}\n`;
+  });
+
+  msg += `\nPor actividad:\n`;
+  msg += `🟦 Trabajo: ${formatTime(byActivity.trabajo)}\n`;
+  msg += `📞 Teléfono: ${formatTime(byActivity.telefono)}\n`;
+  msg += `👥 Cliente: ${formatTime(byActivity.cliente)}\n`;
+  msg += `📖 Estudio: ${formatTime(byActivity.estudio)}\n`;
+  msg += `⚙️ Otros: ${formatTime(byActivity.otros)}\n`;
 
   alert(msg);
 }
@@ -150,15 +179,15 @@ document.getElementById("newClient").addEventListener("click", () => {
 
 document.getElementById("changeClient").addEventListener("click", () => {
   const { clients } = getCurrentState();
-  const openClients = clients.filter(c => c.estado === "abierto");
-  if (openClients.length === 0) return;
+  const open = clients.filter(c => c.estado === "abierto");
+  if (!open.length) return;
 
-  let msg = "Toca el número del cliente:\n\n";
-  openClients.forEach((c, i) => (msg += `${i + 1}. ${c.nombre}\n`));
-
+  let msg = "Cliente:\n\n";
+  open.forEach((c, i) => msg += `${i + 1}. ${c.nombre}\n`);
   const sel = parseInt(prompt(msg), 10) - 1;
-  if (openClients[sel]) {
-    changeClient(openClients[sel].id);
+
+  if (open[sel]) {
+    changeClient(open[sel].id);
     updateUI();
   }
 });
@@ -168,9 +197,11 @@ document.getElementById("closeClient").addEventListener("click", () => {
   updateUI();
 });
 
-document
-  .getElementById("focusReport")
+document.getElementById("focusReport")
   .addEventListener("click", showFocusReport);
+
+document.getElementById("dailyReport")
+  .addEventListener("click", showDailyReport);
 
 // ---------- INICIO ----------
 updateUI();
