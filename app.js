@@ -52,6 +52,18 @@ function calculateClientTotal(clientId) {
 }
 
 /* ===== UI ===== */
+function clearSelection() {
+  activityButtons.forEach(b => b.classList.remove("selected"));
+}
+
+function selectActivity(activity) {
+  clearSelection();
+  const btn = document.querySelector(
+    `.activity[data-activity="${activity}"]`
+  );
+  if (btn) btn.classList.add("selected");
+}
+
 function updateUI(lastActivity = null) {
   const { state, clients } = getCurrentState();
   const client = clients.find(c => c.id === state.currentClientId);
@@ -77,19 +89,15 @@ function updateUI(lastActivity = null) {
   }
 }
 
-/* ===== ACTIVIDADES (SOLO ESTÉTICA + CAMBIO REAL) ===== */
+/* ===== ACTIVIDADES ===== */
 activityButtons.forEach(btn => {
   btn.onclick = () => {
     const { state } = getCurrentState();
     if (!state.currentClientId) return;
 
     const act = btn.dataset.activity;
-
-    // reset visual
-    activityButtons.forEach(b => b.classList.remove("selected"));
-    btn.classList.add("selected");
-
     changeActivity(act);
+    selectActivity(act);
     updateUI(act);
   };
 });
@@ -101,10 +109,9 @@ document.getElementById("newClient").onclick = () => {
 
   newClient(n.trim());
 
-  // no marcamos visualmente nada al inicio
-  activityButtons.forEach(b => b.classList.remove("selected"));
-
+  // Comenzamos SIEMPRE en Trabajo y marcado
   changeActivity("trabajo");
+  selectActivity("trabajo");
   updateUI("trabajo");
 };
 
@@ -120,15 +127,15 @@ document.getElementById("changeClient").onclick = () => {
 
   changeClient(open[sel].id);
 
-  activityButtons.forEach(b => b.classList.remove("selected"));
-
+  // Al cambiar de cliente, arrancamos en Trabajo
   changeActivity("trabajo");
+  selectActivity("trabajo");
   updateUI("trabajo");
 };
 
 document.getElementById("closeClient").onclick = () => {
   closeClient();
-  activityButtons.forEach(b => b.classList.remove("selected"));
+  clearSelection();
   updateUI(null);
 };
 
