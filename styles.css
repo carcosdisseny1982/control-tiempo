@@ -5,6 +5,8 @@ body {
   color: #fff;
 }
 
+/* ---------- HEADER ---------- */
+
 header {
   padding: 16px;
   text-align: center;
@@ -22,9 +24,11 @@ header {
 }
 
 #timer {
-  font-size: 2.2rem;
+  font-size: 2.4rem;
   margin-top: 8px;
 }
+
+/* ---------- ACTIVIDADES ---------- */
 
 main {
   display: grid;
@@ -34,10 +38,10 @@ main {
 }
 
 button {
-  font-size: 1.2rem;
-  padding: 20px;
+  font-size: 1.1rem;
+  padding: 18px;
   border: none;
-  border-radius: 12px;
+  border-radius: 14px;
   cursor: pointer;
 }
 
@@ -50,14 +54,28 @@ button.activity.active {
   background: #0a84ff;
 }
 
+/* ---------- FOOTER ---------- */
+
 footer {
-  display: flex;
-  gap: 8px;
   padding: 12px;
+  border-top: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-footer button {
+.footer-row {
+  display: flex;
+  gap: 8px;
+}
+
+.footer-row button {
   flex: 1;
   background: #333;
   color: #fff;
 }
+
+.focus-btn {
+  background: #444;
+  font-weight: bold;
+  }
