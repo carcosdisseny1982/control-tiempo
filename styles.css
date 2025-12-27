@@ -1,0 +1,63 @@
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #111;
+  color: #fff;
+}
+
+header {
+  padding: 16px;
+  text-align: center;
+  border-bottom: 1px solid #333;
+}
+
+#clientName {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+#activityName {
+  margin-top: 4px;
+  color: #aaa;
+}
+
+#timer {
+  font-size: 2.2rem;
+  margin-top: 8px;
+}
+
+main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 16px;
+}
+
+button {
+  font-size: 1.2rem;
+  padding: 20px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+button.activity {
+  background: #222;
+  color: #fff;
+}
+
+button.activity.active {
+  background: #0a84ff;
+}
+
+footer {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+}
+
+footer button {
+  flex: 1;
+  background: #333;
+  color: #fff;
+}
