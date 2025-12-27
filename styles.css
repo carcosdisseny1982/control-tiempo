@@ -1,4 +1,4 @@
-* {
+ok* {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -61,4 +61,44 @@ header {
   padding: 14px 8px;
   font-size: 14px;
   cursor: pointer;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-content {
+  background: #222;
+  color: #fff;
+  padding: 16px;
+  border-radius: 12px;
+  max-width: 90%;
+  max-height: 80%;
+  overflow: auto;
+  font-family: monospace;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  justify-content: flex-end;
+}
+
+.modal-actions button {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+  background: #444;
+  color: #fff;
 }
