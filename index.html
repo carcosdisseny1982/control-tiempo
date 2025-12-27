@@ -1,49 +1,38 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Control de Tiempo</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
 
-  <!-- ===== HEADER ===== -->
   <header>
     <div id="clientName">Sin cliente activo</div>
     <div id="activityName">—</div>
     <div id="timer">00:00:00</div>
   </header>
 
-  <!-- ===== ACTIVIDADES ===== -->
   <main>
-    <button class="activity" data-activity="trabajo">🟦 Trabajo</button>
-    <button class="activity" data-activity="telefono">📞 Teléfono</button>
-    <button class="activity" data-activity="cliente">👥 Cliente</button>
-    <button class="activity" data-activity="estudio">📖 Estudio</button>
-    <button class="activity" data-activity="otros">⚙️ Otros</button>
-  </main>
 
-  <!-- ===== FOOTER ===== -->
-  <footer>
+    <div class="activities">
+      <button class="activity trabajo" data-activity="trabajo">🟦 Trabajo</button>
+      <button class="activity" data-activity="telefono">📞 Teléfono</button>
+      <button class="activity" data-activity="cliente">👥 Cliente</button>
+      <button class="activity" data-activity="estudio">📘 Estudio</button>
+      <button class="activity" data-activity="otros">⚙️ Otros</button>
+    </div>
 
-    <div class="footer-row">
+    <div class="actions">
       <button id="newClient">➕ Nuevo</button>
       <button id="changeClient">🔁 Cambiar</button>
       <button id="closeClient">✅ Cerrar</button>
     </div>
 
-    <div class="footer-row">
-      <button id="focusReport" class="focus-btn">🎯 Enfoque</button>
-      <button id="dailyReport" class="focus-btn">📅 Hoy</button>
-      <button id="dailyPdf" class="focus-btn">📄 PDF</button>
-    </div>
+  </main>
 
-  </footer>
-
-  <!-- ===== SCRIPT ===== -->
   <script type="module" src="app.js"></script>
-
 </body>
-  </html>
+                                                                    </html>
