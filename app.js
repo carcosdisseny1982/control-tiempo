@@ -6,253 +6,270 @@ import {
   getCurrentState
 } from "./timeEngine.js";
 
-document.addEventListener("DOMContentLoaded", () => {
+/* ===============================
+   CONFIGURACIÓN INICIAL
+================================ */
 
-  /* ===== TEXTOS ===== */
-  const ACTIVITY_LABELS = {
-    trabajo: "Trabajo",
-    telefono: "Teléfono",
-    cliente: "Cliente",
-    estudio: "Visitando",
-    otros: "Otros"
+const WORKER_KEY = "focowork_worker_name";
+let workerName = localStorage.getItem(WORKER_KEY);
+
+if (!workerName) {
+  workerName = prompt("Nombre del trabajador:");
+  if (workerName) {
+    localStorage.setItem(WORKER_KEY, workerName.trim());
+  } else {
+    workerName = "Sin nombre";
+  }
+}
+
+const FOCUS_WINDOW_MS = 90 * 60 * 1000;
+
+/* ===============================
+   ELEMENTOS UI
+================================ */
+
+const clientNameEl = document.getElementById("clientName");
+const activityNameEl = document.getElementById("activityName");
+const timerEl = document.getElementById("timer");
+
+const activityButtons = document.querySelectorAll(".activity");
+
+let timerInterval = null;
+
+/* ===============================
+   UTILIDADES
+================================ */
+
+function formatTime(ms) {
+  const totalSeconds = Math.floor(ms / 1000);
+  const h = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
+  const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
+  const s = String(totalSeconds % 60).padStart(2, "0");
+  return `${h}:${m}:${s}`;
+}
+
+/* ===============================
+   TIEMPO TOTAL CLIENTE
+================================ */
+
+function calculateClientTotal(clientId) {
+  const { blocks } = getCurrentState();
+  const now = Date.now();
+  let total = 0;
+
+  blocks.forEach(b => {
+    if (b.cliente_id === clientId) {
+      total += (b.fin ?? now) - b.inicio;
+    }
+  });
+
+  return total;
+}
+
+/* ===============================
+   ENFOQUE (90 MIN)
+================================ */
+
+function calculateFocusReport() {
+  const { blocks } = getCurrentState();
+  const now = Date.now();
+  const startWindow = now - FOCUS_WINDOW_MS;
+
+  const totals = {
+    trabajo: 0,
+    telefono: 0,
+    cliente: 0,
+    visitando: 0,
+    otros: 0
   };
 
-  /* ===== TRABAJADOR (UNA SOLA VEZ) ===== */
-  function getWorkerName() {
-    let name = localStorage.getItem("focowork_worker_name");
-    if (!name) {
-      name = prompt("Nombre del trabajador:\n(se usará en los reportes)");
-      if (!name) name = "trabajador";
-      localStorage.setItem("focowork_worker_name", name.trim());
+  blocks.forEach(b => {
+    const start = Math.max(b.inicio, startWindow);
+    const end = Math.min(b.fin ?? now, now);
+    if (end > start && totals[b.actividad] !== undefined) {
+      totals[b.actividad] += end - start;
     }
-    return name.trim();
-  }
+  });
 
-  function safeName(str) {
-    return str
-      .toLowerCase()
-      .replace(/\s+/g, "_")
-      .replace(/[^a-z0-9_]/g, "");
-  }
+  const totalTime = Object.values(totals).reduce((a, b) => a + b, 0);
+  const workPct = totalTime
+    ? Math.round((totals.trabajo / totalTime) * 100)
+    : 0;
 
-  const WORKER_NAME = getWorkerName();
+  let status = "🟢 Enfocado";
+  if (workPct < 40) status = "🔴 Dispersión";
+  else if (workPct < 65) status = "🟡 Atención";
 
-  /* ===== ELEMENTOS UI ===== */
-  const clientNameEl = document.getElementById("clientName");
-  const activityNameEl = document.getElementById("activityName");
-  const timerEl = document.getElementById("timer");
-  const activityButtons = document.querySelectorAll(".activity");
+  return { totals, workPct, status };
+}
 
-  const focusBtn =
-    document.getElementById("focusBtn") ||
-    document.getElementById("focusReport");
+function showFocusReport() {
+  const r = calculateFocusReport();
 
-  const todayBtn =
-    document.getElementById("todayBtn") ||
-    document.getElementById("dailyReport");
+  alert(
+    `🎯 ENFOQUE (últimos 90 min)\n\n` +
+    `Trabajo: ${formatTime(r.totals.trabajo)}\n` +
+    `Teléfono: ${formatTime(r.totals.telefono)}\n` +
+    `Cliente: ${formatTime(r.totals.cliente)}\n` +
+    `Visitando: ${formatTime(r.totals.visitando)}\n` +
+    `Otros: ${formatTime(r.totals.otros)}\n\n` +
+    `Trabajo: ${r.workPct}%\n` +
+    `Estado: ${r.status}`
+  );
+}
 
-  let timerInterval = null;
-  const FOCUS_WINDOW_MS = 90 * 60 * 1000;
+/* ===============================
+   REPORTE DIARIO
+================================ */
 
-  /* ===== UTIL ===== */
-  function formatTime(ms) {
-    const s = Math.floor(ms / 1000);
-    const h = String(Math.floor(s / 3600)).padStart(2, "0");
-    const m = String(Math.floor((s % 3600) / 60)).padStart(2, "0");
-    const sec = String(s % 60).padStart(2, "0");
-    return `${h}:${m}:${sec}`;
-  }
+function buildDailyReportText() {
+  const { blocks } = getCurrentState();
+  const now = new Date();
 
-  /* ===== TOTAL CLIENTE ===== */
-  function calculateClientTotal(clientId) {
-    const { blocks } = getCurrentState();
-    const now = Date.now();
-    let total = 0;
+  const startDay = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate()
+  ).getTime();
 
-    blocks.forEach(b => {
-      if (b.cliente_id === clientId) {
-        total += (b.fin ?? now) - b.inicio;
-      }
-    });
-    return total;
-  }
+  const totals = {
+    trabajo: 0,
+    telefono: 0,
+    cliente: 0,
+    visitando: 0,
+    otros: 0
+  };
 
-  /* ===== UI ===== */
-  function clearSelection() {
-    activityButtons.forEach(b => b.classList.remove("selected"));
-  }
-
-  function selectActivity(act) {
-    clearSelection();
-    const btn = document.querySelector(
-      `.activity[data-activity="${act}"]`
-    );
-    if (btn) btn.classList.add("selected");
-  }
-
-  function updateUI(lastActivity = null) {
-    const { state, clients } = getCurrentState();
-    const client = clients.find(c => c.id === state.currentClientId);
-
-    clientNameEl.textContent = client
-      ? `Cliente: ${client.nombre}`
-      : "Sin cliente activo";
-
-    activityNameEl.textContent = lastActivity
-      ? `Actividad: ${ACTIVITY_LABELS[lastActivity]}`
-      : "—";
-
-    if (timerInterval) clearInterval(timerInterval);
-
-    if (client) {
-      timerInterval = setInterval(() => {
-        timerEl.textContent = formatTime(
-          calculateClientTotal(client.id)
-        );
-      }, 1000);
-    } else {
-      timerEl.textContent = "00:00:00";
+  blocks.forEach(b => {
+    const start = Math.max(b.inicio, startDay);
+    const end = Math.min(b.fin ?? Date.now(), Date.now());
+    if (end > start && totals[b.actividad] !== undefined) {
+      totals[b.actividad] += end - start;
     }
+  });
+
+  const totalDay = Object.values(totals).reduce((a, b) => a + b, 0);
+
+  let txt =
+`REPORTE DIARIO - FocoWork
+Trabajador: ${workerName}
+Fecha: ${now.toLocaleDateString()}
+
+Trabajo:   ${formatTime(totals.trabajo)}
+Teléfono:  ${formatTime(totals.telefono)}
+Cliente:   ${formatTime(totals.cliente)}
+Visitando: ${formatTime(totals.visitando)}
+Otros:     ${formatTime(totals.otros)}
+
+TOTAL: ${formatTime(totalDay)}
+`;
+
+  return txt;
+}
+
+/* ===============================
+   DESCARGA ARCHIVO (UTF-8)
+================================ */
+
+function downloadDailyReport() {
+  const text = buildDailyReportText();
+
+  const blob = new Blob(
+    [text],
+    { type: "text/plain;charset=utf-8" } // 👈 ACENTOS CORREGIDOS
+  );
+
+  const dateStr = new Date().toISOString().slice(0, 10);
+  const safeName = workerName.replace(/\s+/g, "_");
+
+  const filename = `focowork-${safeName}-${dateStr}.txt`;
+
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+
+  document.body.appendChild(link);
+  link.click();
+
+  setTimeout(() => {
+    URL.revokeObjectURL(link.href);
+    document.body.removeChild(link);
+  }, 100);
+}
+
+/* ===============================
+   UI
+================================ */
+
+function updateUI() {
+  const { state, clients } = getCurrentState();
+  const client = clients.find(c => c.id === state.currentClientId);
+
+  clientNameEl.textContent = client
+    ? `Cliente: ${client.nombre}`
+    : "Sin cliente activo";
+
+  activityNameEl.textContent = state.currentActivity
+    ? `Actividad: ${state.currentActivity}`
+    : "—";
+
+  if (timerInterval) clearInterval(timerInterval);
+
+  if (client) {
+    timerInterval = setInterval(() => {
+      timerEl.textContent = formatTime(
+        calculateClientTotal(client.id)
+      );
+    }, 1000);
+  } else {
+    timerEl.textContent = "00:00:00";
   }
+}
 
-  /* ===== ACTIVIDADES ===== */
-  activityButtons.forEach(btn => {
-    btn.addEventListener("click", () => {
-      const { state } = getCurrentState();
-      if (!state.currentClientId) return;
+/* ===============================
+   EVENTOS
+================================ */
 
-      const act = btn.dataset.activity;
-      changeActivity(act);
-      selectActivity(act);
-      updateUI(act);
-    });
-  });
-
-  /* ===== CLIENTES ===== */
-  document.getElementById("newClient")?.addEventListener("click", () => {
-    const n = prompt("Nombre cliente:");
-    if (!n) return;
-
-    newClient(n.trim());
-    changeActivity("trabajo");
-    selectActivity("trabajo");
-    updateUI("trabajo");
-  });
-
-  document.getElementById("changeClient")?.addEventListener("click", () => {
-    const { clients } = getCurrentState();
-    const open = clients.filter(c => c.estado === "abierto");
-    if (!open.length) return;
-
-    let txt = "Cliente:\n";
-    open.forEach((c, i) => (txt += `${i + 1}. ${c.nombre}\n`));
-    const sel = parseInt(prompt(txt), 10) - 1;
-    if (!open[sel]) return;
-
-    changeClient(open[sel].id);
-    changeActivity("trabajo");
-    selectActivity("trabajo");
-    updateUI("trabajo");
-  });
-
-  document.getElementById("closeClient")?.addEventListener("click", () => {
-    closeClient();
-    clearSelection();
-    updateUI(null);
-  });
-
-  /* ===== 🎯 ENFOQUE (90 MIN – REAL) ===== */
-  if (focusBtn) {
-    focusBtn.addEventListener("click", () => {
-      const { blocks } = getCurrentState();
-      const now = Date.now();
-      const start = now - FOCUS_WINDOW_MS;
-
-      const totals = {
-        trabajo: 0,
-        telefono: 0,
-        cliente: 0,
-        estudio: 0,
-        otros: 0
-      };
-
-      blocks.forEach(b => {
-        const s = Math.max(b.inicio, start);
-        const e = Math.min(b.fin ?? now, now);
-        if (e > s) totals[b.actividad] += e - s;
-      });
-
-      const total = Object.values(totals).reduce((a, b) => a + b, 0);
-      const pct = total ? Math.round((totals.trabajo / total) * 100) : 0;
-
-      let estado = "🟢 Enfocado";
-      if (pct < 40) estado = "🔴 Disperso";
-      else if (pct < 65) estado = "🟡 Atención";
-
-      let msg = `🎯 Enfoque (últimos 90 min)\n\n`;
-      Object.entries(totals).forEach(([a, t]) => {
-        msg += `${ACTIVITY_LABELS[a]}: ${formatTime(t)}\n`;
-      });
-      msg += `\nTrabajo: ${pct}%\nEstado: ${estado}`;
-
-      alert(msg);
-    });
-  }
-
-  /* ===== 📅 REPORTE DIARIO (REAL) ===== */
-  if (todayBtn) {
-    todayBtn.addEventListener("click", () => {
-      const { blocks } = getCurrentState();
-      const now = new Date();
-
-      const startDay = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate()
-      ).getTime();
-
-      const totals = {
-        trabajo: 0,
-        telefono: 0,
-        cliente: 0,
-        estudio: 0,
-        otros: 0
-      };
-
-      blocks.forEach(b => {
-        const s = Math.max(b.inicio, startDay);
-        const e = Math.min(b.fin ?? Date.now(), Date.now());
-        if (e > s) totals[b.actividad] += e - s;
-      });
-
-      const totalDay = Object.values(totals).reduce((a, b) => a + b, 0);
-
-      let txt = `REPORTE DIARIO - FocoWork\n`;
-      txt += `Trabajador: ${WORKER_NAME}\n`;
-      txt += `Fecha: ${now.toLocaleDateString()}\n\n`;
-
-      Object.entries(totals).forEach(([a, t]) => {
-        txt += `${ACTIVITY_LABELS[a]}: ${formatTime(t)}\n`;
-      });
-
-      txt += `\nTOTAL: ${formatTime(totalDay)}\n`;
-
-      const blob = new Blob([txt], { type: "text/plain;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `focowork-${safeName(WORKER_NAME)}-${now
-        .toISOString()
-        .slice(0, 10)}.txt`;
-
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    });
-  }
-
-  updateUI();
+activityButtons.forEach(btn => {
+  btn.onclick = () => {
+    changeActivity(btn.dataset.activity);
+    updateUI();
+  };
 });
+
+document.getElementById("newClient").onclick = () => {
+  const n = prompt("Nombre del cliente:");
+  if (n) {
+    newClient(n.trim());
+    updateUI();
+  }
+};
+
+document.getElementById("changeClient").onclick = () => {
+  const { clients } = getCurrentState();
+  const open = clients.filter(c => c.estado === "abierto");
+  if (!open.length) return;
+
+  let m = "Cambiar a cliente:\n";
+  open.forEach((c, i) => m += `${i + 1}. ${c.nombre}\n`);
+  const s = parseInt(prompt(m), 10) - 1;
+
+  if (open[s]) {
+    changeClient(open[s].id);
+    updateUI();
+  }
+};
+
+document.getElementById("closeClient").onclick = () => {
+  closeClient();
+  updateUI();
+};
+
+document.getElementById("focusReport").onclick = showFocusReport;
+document.getElementById("dailyPdf").onclick = downloadDailyReport;
+
+/* ===============================
+   INICIO
+================================ */
+
+updateUI();
