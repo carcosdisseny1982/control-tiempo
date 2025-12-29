@@ -16,17 +16,32 @@ document.addEventListener("DOMContentLoaded", () => {
     otros: "Otros"
   };
 
-  /* ===== ELEMENTOS ===== */
+  function getWorkerName() {
+    let name = localStorage.getItem("focowork_worker_name");
+    if (!name) {
+      name = prompt("Nombre del trabajador:");
+      if (!name) name = "trabajador";
+      localStorage.setItem("focowork_worker_name", name.trim());
+    }
+    return name.trim();
+  }
+
+  const WORKER_NAME = getWorkerName();
+
   const clientNameEl = document.getElementById("clientName");
   const activityNameEl = document.getElementById("activityName");
   const timerEl = document.getElementById("timer");
-  const panel = document.getElementById("statusPanel");
-
   const activityButtons = document.querySelectorAll(".activity");
 
-  let timerInterval = null;
+  const focusBtn = document.getElementById("focusBtn");
+  const todayBtn = document.getElementById("todayBtn");
 
-  /* ===== UTIL ===== */
+  const infoPanel = document.getElementById("infoPanel");
+  const infoText = document.getElementById("infoText");
+
+  let timerInterval = null;
+  const FOCUS_WINDOW_MS = 90 * 60 * 1000;
+
   function formatTime(ms) {
     const s = Math.floor(ms / 1000);
     const h = String(Math.floor(s / 3600)).padStart(2, "0");
@@ -35,17 +50,30 @@ document.addEventListener("DOMContentLoaded", () => {
     return `${h}:${m}:${sec}`;
   }
 
+  function calculateClientTotal(clientId) {
+    const { blocks } = getCurrentState();
+    const now = Date.now();
+    let total = 0;
+
+    blocks.forEach(b => {
+      if (b.cliente_id === clientId) {
+        total += (b.fin ?? now) - b.inicio;
+      }
+    });
+    return total;
+  }
+
   function clearSelection() {
     activityButtons.forEach(b => b.classList.remove("selected"));
   }
 
   function selectActivity(act) {
     clearSelection();
-    document.querySelector(`[data-activity="${act}"]`)?.classList.add("selected");
+    const btn = document.querySelector(`.activity[data-activity="${act}"]`);
+    if (btn) btn.classList.add("selected");
   }
 
-  /* ===== UI ===== */
-  function updateUI(activity = null) {
+  function updateUI(lastActivity = null) {
     const { state, clients } = getCurrentState();
     const client = clients.find(c => c.id === state.currentClientId);
 
@@ -53,30 +81,23 @@ document.addEventListener("DOMContentLoaded", () => {
       ? `Cliente: ${client.nombre}`
       : "Sin cliente activo";
 
-    activityNameEl.textContent = activity
-      ? `Actividad: ${ACTIVITY_LABELS[activity]}`
+    activityNameEl.textContent = lastActivity
+      ? `Actividad: ${ACTIVITY_LABELS[lastActivity]}`
       : "—";
 
     if (timerInterval) clearInterval(timerInterval);
 
     if (client) {
       timerInterval = setInterval(() => {
-        const { blocks } = getCurrentState();
-        const now = Date.now();
-        let total = 0;
-        blocks.forEach(b => {
-          if (b.cliente_id === client.id) {
-            total += (b.fin ?? now) - b.inicio;
-          }
-        });
-        timerEl.textContent = formatTime(total);
+        timerEl.textContent = formatTime(
+          calculateClientTotal(client.id)
+        );
       }, 1000);
     } else {
       timerEl.textContent = "00:00:00";
     }
   }
 
-  /* ===== ACTIVIDADES ===== */
   activityButtons.forEach(btn => {
     btn.addEventListener("click", () => {
       const { state } = getCurrentState();
@@ -89,15 +110,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  /* ===== CLIENTES ===== */
   document.getElementById("newClient").onclick = () => {
-    const n = prompt("Nombre del cliente:");
+    const n = prompt("Nombre cliente:");
     if (!n) return;
-    newClient(n);
+    newClient(n.trim());
     changeActivity("trabajo");
     selectActivity("trabajo");
     updateUI("trabajo");
-    panel.classList.add("hidden");
   };
 
   document.getElementById("changeClient").onclick = () => {
@@ -105,51 +124,38 @@ document.addEventListener("DOMContentLoaded", () => {
     const open = clients.filter(c => c.estado === "abierto");
     if (!open.length) return;
 
-    let msg = "Cliente:\n";
-    open.forEach((c, i) => msg += `${i + 1}. ${c.nombre}\n`);
-    const sel = parseInt(prompt(msg), 10) - 1;
+    let txt = "Cliente:\n";
+    open.forEach((c, i) => txt += `${i + 1}. ${c.nombre}\n`);
+    const sel = parseInt(prompt(txt), 10) - 1;
     if (!open[sel]) return;
 
     changeClient(open[sel].id);
     changeActivity("trabajo");
     selectActivity("trabajo");
     updateUI("trabajo");
-    panel.classList.add("hidden");
   };
 
   document.getElementById("closeClient").onclick = () => {
-    const { state, clients, blocks } = getCurrentState();
+    const { state, clients } = getCurrentState();
     const client = clients.find(c => c.id === state.currentClientId);
+
     if (!client) return;
 
-    let total = 0;
-    const now = Date.now();
-    blocks.forEach(b => {
-      if (b.cliente_id === client.id) {
-        total += (b.fin ?? now) - b.inicio;
-      }
-    });
-
+    const total = calculateClientTotal(client.id);
     closeClient();
+
+    infoText.innerHTML = `
+      Cliente: ${client.nombre}<br>
+      Tiempo total: ${formatTime(total)}
+    `;
+
+    infoPanel.classList.remove("hidden");
     clearSelection();
     updateUI(null);
-
-    panel.innerHTML = `
-      <strong>✔ Cliente cerrado</strong><br>
-      Cliente: ${client.nombre}<br>
-      Tiempo total: ${formatTime(total)}<br><br>
-      <span style="color:#4caf50">Tiempo listo para facturación</span>
-    `;
-    panel.className = "panel success";
   };
 
-  document.getElementById("focusBtn").onclick = () => {
-    alert("Enfoque calculado correctamente (90 min)");
-  };
-
-  document.getElementById("todayBtn").onclick = () => {
-    alert("Reporte diario generado");
-  };
+  focusBtn.onclick = () => alert("🎯 Enfoque operativo");
+  todayBtn.onclick = () => alert("📅 Reporte diario operativo");
 
   updateUI();
 });
