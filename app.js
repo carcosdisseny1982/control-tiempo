@@ -199,69 +199,94 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* ===== 📅 REPORTE DIARIO (CSV – EXCEL) ===== */
-  if (todayBtn) {
-    todayBtn.addEventListener("click", () => {
-      const { blocks, clients } = getCurrentState();
-      const now = new Date();
+  /* ===== 📅 REPORTE DIARIO RESUMIDO (CSV PROFESIONAL) ===== */
+if (todayBtn) {
+  todayBtn.addEventListener("click", () => {
+    const { blocks, clients } = getCurrentState();
+    const now = new Date();
 
-      const startDay = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate()
-      ).getTime();
+    const startDay = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    ).getTime();
 
-      let rows = [];
-      rows.push([
-        "Fecha",
-        "Trabajador",
-        "Cliente",
-        "Actividad",
-        "Tiempo_segundos",
-        "Tiempo_hhmmss"
-      ].join(","));
+    // estructura: cliente -> actividad -> ms
+    const data = {};
 
-      blocks.forEach(b => {
-        const s = Math.max(b.inicio, startDay);
-        const e = Math.min(b.fin ?? Date.now(), Date.now());
-        if (e <= s) return;
+    blocks.forEach(b => {
+      const s = Math.max(b.inicio, startDay);
+      const e = Math.min(b.fin ?? Date.now(), Date.now());
+      if (e <= s) return;
 
-        const durMs = e - s;
-        const durSec = Math.floor(durMs / 1000);
+      const client = clients.find(c => c.id === b.cliente_id);
+      if (!client) return;
 
-        const client = clients.find(c => c.id === b.cliente_id);
-        if (!client) return;
+      if (!data[client.nombre]) {
+        data[client.nombre] = {
+          trabajo: 0,
+          telefono: 0,
+          cliente: 0,
+          estudio: 0,
+          otros: 0
+        };
+      }
 
-        rows.push([
-          now.toISOString().slice(0, 10),
-          WORKER_NAME,
-          client.nombre,
-          ACTIVITY_LABELS[b.actividad],
-          durSec,
-          formatTime(durMs)
-        ].join(","));
-      });
-
-      const csvContent = rows.join("\n");
-      const blob = new Blob([csvContent], {
-        type: "text/csv;charset=utf-8;"
-      });
-
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-
-      a.href = url;
-      a.download = `focowork-${safeName(WORKER_NAME)}-${now
-        .toISOString()
-        .slice(0, 10)}.csv`;
-
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      data[client.nombre][b.actividad] += e - s;
     });
-  }
+
+    let rows = [];
+    rows.push([
+      "Fecha",
+      "Trabajador",
+      "Cliente",
+      "Trabajo",
+      "Teléfono",
+      "Visitando",
+      "Otros",
+      "TOTAL"
+    ].join(","));
+
+    Object.entries(data).forEach(([cliente, acts]) => {
+      const total =
+        acts.trabajo +
+        acts.telefono +
+        acts.estudio +
+        acts.otros +
+        acts.cliente;
+
+      rows.push([
+        now.toISOString().slice(0, 10),
+        WORKER_NAME,
+        cliente,
+        formatTime(acts.trabajo),
+        formatTime(acts.telefono),
+        formatTime(acts.estudio),
+        formatTime(acts.otros),
+        formatTime(total)
+      ].join(","));
+    });
+
+    const csv = rows.join("\n");
+    const blob = new Blob([csv], {
+      type: "text/csv;charset=utf-8;"
+    });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+
+    a.href = url;
+    a.download = `focowork-resumen-${safeName(WORKER_NAME)}-${now
+      .toISOString()
+      .slice(0, 10)}.csv`;
+
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+      }
 
   updateUI();
 });
