@@ -2,51 +2,54 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FocoWork</title>
+
   <link rel="stylesheet" href="styles.css" />
+
+  <!-- Forzar UTF-8 real (evita TelÃ©fono) -->
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 </head>
 
 <body>
-  <div class="app">
 
-    <div class="header">
-      <div id="clientName">Sin cliente activo</div>
-      <div id="activityName">—</div>
-      <div id="timer">00:00:00</div>
-    </div>
+  <main class="app">
+
+    <!-- CABECERA -->
+    <h1 id="clientName">Sin cliente activo</h1>
+    <div id="activityName">—</div>
+
+    <div id="timer" class="timer">00:00:00</div>
 
     <!-- ACTIVIDADES -->
-    <div class="grid activities">
+    <section class="activities">
       <button class="activity" data-activity="trabajo">🟦 Trabajo</button>
       <button class="activity" data-activity="telefono">📞 Teléfono</button>
       <button class="activity" data-activity="cliente">👥 Cliente</button>
       <button class="activity" data-activity="estudio">📘 Visitando</button>
       <button class="activity" data-activity="otros">⚙️ Otros</button>
-    </div>
+    </section>
 
     <!-- CLIENTES -->
-    <div class="grid actions">
+    <section class="clients">
       <button id="newClient">➕ Nuevo</button>
-      <button id="changeClient">🔄 Cambiar</button>
-      <button id="closeClient">✅ Cerrar</button>
-    </div>
+      <button id="changeClient">🔁 Cambiar</button>
+      <button id="closeClient">✔ Cerrar</button>
+    </section>
 
-    <!-- REPORTES -->
-    <div class="grid reports">
+    <!-- UTILIDADES -->
+    <section class="tools">
       <button id="focusBtn">🎯 Enfoque</button>
       <button id="todayBtn">📅 Hoy</button>
-    </div>
+    </section>
 
-    <!-- PANEL INFERIOR -->
-    <div id="infoPanel" class="info-panel hidden">
-      <div id="infoTitle">Cliente cerrado</div>
-      <div id="infoText"></div>
-      <div class="ok">✔ Tiempo listo para facturación</div>
-    </div>
+    <!-- PANEL CIERRE CLIENTE (OBLIGATORIO) -->
+    <div id="closePanel" class="close-panel" style="display:none"></div>
 
-  </div>
+  </main>
 
+  <!-- SCRIPT PRINCIPAL -->
   <script type="module" src="app.js"></script>
+
 </body>
-  </html>
+      </html>
