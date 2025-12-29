@@ -97,3 +97,29 @@ header {
   font-size: 14px;
   cursor: pointer;
 }
+.close-summary {
+  margin-top: 12px;
+  padding: 14px;
+  background: #f4f6fa;
+  border-top: 2px solid #d0d7ff;
+  font-size: 14px;
+}
+
+.close-summary.hidden {
+  display: none;
+}
+
+.summary-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.summary-body div {
+  margin-bottom: 4px;
+}
+
+.summary-footer {
+  margin-top: 8px;
+  color: #2e7d32;
+  font-weight: 500;
+}
