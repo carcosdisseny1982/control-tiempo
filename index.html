@@ -2,54 +2,53 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FocoWork</title>
-
   <link rel="stylesheet" href="styles.css" />
-
-  <!-- Forzar UTF-8 real (evita TelÃ©fono) -->
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 </head>
 
 <body>
-
-  <main class="app">
+  <div class="app">
 
     <!-- CABECERA -->
     <h1 id="clientName">Sin cliente activo</h1>
-    <div id="activityName">—</div>
+    <div class="subtitle" id="activityName">—</div>
 
-    <div id="timer" class="timer">00:00:00</div>
+    <!-- TIMER -->
+    <div class="timer" id="timer">00:00:00</div>
 
     <!-- ACTIVIDADES -->
-    <section class="activities">
-      <button class="activity" data-activity="trabajo">🟦 Trabajo</button>
+    <div class="activities">
+      <button class="activity" data-activity="trabajo">📘 Trabajo</button>
       <button class="activity" data-activity="telefono">📞 Teléfono</button>
       <button class="activity" data-activity="cliente">👥 Cliente</button>
-      <button class="activity" data-activity="estudio">📘 Visitando</button>
-      <button class="activity" data-activity="otros">⚙️ Otros</button>
-    </section>
+      <button class="activity" data-activity="estudio">📖 Visitando</button>
+      <button class="activity otros" data-activity="otros">⚙️ Otros</button>
+    </div>
 
     <!-- CLIENTES -->
-    <section class="clients">
+    <div class="clients">
       <button id="newClient">➕ Nuevo</button>
       <button id="changeClient">🔁 Cambiar</button>
-      <button id="closeClient">✔ Cerrar</button>
-    </section>
+      <button id="closeClient">✅ Cerrar</button>
+    </div>
 
-    <!-- UTILIDADES -->
-    <section class="tools">
+    <!-- TOOLS -->
+    <div class="tools">
       <button id="focusBtn">🎯 Enfoque</button>
       <button id="todayBtn">📅 Hoy</button>
-    </section>
+    </div>
 
-    <!-- PANEL CIERRE CLIENTE (OBLIGATORIO) -->
-    <div id="closePanel" class="close-panel" style="display:none"></div>
+    <!-- PANEL CLIENTE CERRADO -->
+    <div id="closePanel" class="close-panel hidden">
+      <h3>✔ Cliente cerrado</h3>
+      <p id="closeClientName"></p>
+      <p id="closeClientTime"></p>
+      <div class="ok">Tiempo listo para facturación</div>
+    </div>
 
-  </main>
+  </div>
 
-  <!-- SCRIPT PRINCIPAL -->
   <script type="module" src="app.js"></script>
-
 </body>
-      </html>
+        </html>
