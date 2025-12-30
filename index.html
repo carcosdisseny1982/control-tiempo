@@ -10,44 +10,46 @@
 <body>
   <div class="app">
 
+    <!-- CABECERA -->
     <h1 id="clientName">Sin cliente activo</h1>
-    <div id="activityName" class="subtitle">—</div>
+    <div class="subtitle" id="activityName">—</div>
 
-    <div id="timer">00:00:00</div>
+    <!-- TIMER -->
+    <div class="timer" id="timer">00:00:00</div>
 
     <!-- ACTIVIDADES -->
-    <div class="grid">
-      <button data-activity="Trabajo">🟦 Trabajo</button>
-      <button data-activity="Teléfono">📞 Teléfono</button>
-      <button data-activity="Cliente">👥 Cliente</button>
-      <button data-activity="Visitando">📘 Visitando</button>
-      <button data-activity="Otros">⚙️ Otros</button>
+    <div class="activities">
+      <button id="btnTrabajo">🟦 Trabajo</button>
+      <button id="btnTelefono">📞 Teléfono</button>
+      <button id="btnCliente">👥 Cliente</button>
+      <button id="btnVisitando">📘 Visitando</button>
+      <button id="btnOtros" class="full">⚙️ Otros</button>
     </div>
 
-    <!-- CLIENTE -->
-    <div class="grid">
+    <!-- CLIENTES -->
+    <div class="clients">
       <button id="btnNuevo">➕ Nuevo</button>
       <button id="btnCambiar">🔁 Cambiar</button>
       <button id="btnCerrar">✅ Cerrar</button>
     </div>
 
-    <!-- EXTRAS -->
-    <div class="grid">
+    <!-- UTILIDADES -->
+    <div class="tools">
       <button id="btnEnfoque">🎯 Enfoque</button>
       <button id="btnReporte">📄 Reporte</button>
     </div>
 
-    <!-- INFO -->
-    <div id="info" class="info"></div>
+    <!-- MENSAJES -->
+    <div id="statusBox"></div>
 
-    <!-- BLOQUE LICENCIA -->
-    <div class="licencia">
+    <!-- BLOQUE VERSIÓN PRUEBA -->
+    <div id="trialBox">
       🔒 Versión de prueba (máx. 2 clientes)
-      <button disabled>Activar versión completa</button>
+      <button id="btnUpgrade">🔓 Activar versión completa</button>
     </div>
 
   </div>
 
   <script src="app.js"></script>
 </body>
-</html>
+  </html>
