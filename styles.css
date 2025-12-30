@@ -1,76 +1,99 @@
 * {
   box-sizing: border-box;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont;
 }
 
 body {
   margin: 0;
-  background: radial-gradient(circle at top, #222, #000);
+  background: linear-gradient(180deg, #0b0b0b, #1a1a1a);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   color: #fff;
 }
 
 .app {
   max-width: 420px;
-  margin: auto;
+  margin: 0 auto;
   padding: 20px;
 }
 
+/* CABECERA */
 h1 {
-  text-align: center;
-  margin-bottom: 5px;
+  margin: 10px 0 4px;
+  font-size: 28px;
+  font-weight: 600;
 }
 
 .subtitle {
-  text-align: center;
   opacity: 0.7;
+  margin-bottom: 14px;
 }
 
-#timer {
-  text-align: center;
+/* TIMER */
+.timer {
   font-size: 48px;
-  margin: 20px 0;
+  font-weight: 700;
+  margin-bottom: 22px;
 }
 
-.grid {
+/* BLOQUES */
+.activities,
+.clients,
+.tools {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 14px;
+  margin-bottom: 20px;
 }
 
+.activities .full {
+  grid-column: 1 / -1;
+}
+
+/* BOTONES */
 button {
-  padding: 14px;
-  border-radius: 14px;
+  height: 56px;
+  border-radius: 18px;
   border: none;
   background: #2b2b2b;
   color: #fff;
   font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
 }
 
 button:active {
-  transform: scale(0.98);
+  transform: scale(0.97);
 }
 
+/* BOTÓN ACTIVO */
 button.active {
-  background: #1e5cff;
+  background: #0a84ff;
 }
 
-#info {
+/* MENSAJES */
+#statusBox {
   margin-top: 16px;
-  padding: 12px;
-  border-left: 4px solid #2ecc71;
-  background: #1b1b1b;
 }
 
-.licencia {
+.status-success {
+  background: #1f2f24;
+  border-left: 4px solid #32d74b;
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+
+/* BLOQUE TRIAL */
+#trialBox {
   margin-top: 20px;
-  padding: 12px;
+  padding: 14px;
   border: 1px dashed #555;
+  border-radius: 16px;
   text-align: center;
-  opacity: 0.8;
+  opacity: 0.85;
 }
 
-body.enfoque button:not(#btnCerrar):not(#btnEnfoque) {
-  opacity: 0.35;
-  pointer-events: none;
+#trialBox button {
+  margin-top: 10px;
+  width: 100%;
+  background: #444;
   }
