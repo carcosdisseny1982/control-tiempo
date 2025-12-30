@@ -1,102 +1,109 @@
-
-let startTime = null;
+let cliente = null;
+let actividad = null;
+let inicio = null;
 let timerInterval = null;
-let currentClient = null;
-let activity = "Trabajo";
+let enfoque = false;
 
-const LIMIT = 2;
-const ACTIVATION_CODE = "FOCOWORK-35";
+const clientName = document.getElementById("clientName");
+const activityName = document.getElementById("activityName");
+const timer = document.getElementById("timer");
+const info = document.getElementById("info");
 
-function isActivated() {
-  return localStorage.getItem("focowork_activated") === "true";
+const clientesGuardados = JSON.parse(localStorage.getItem("clientes")) || [];
+const reportes = JSON.parse(localStorage.getItem("reportes")) || [];
+
+function formatear(ms) {
+  const s = Math.floor(ms / 1000);
+  const h = String(Math.floor(s / 3600)).padStart(2, "0");
+  const m = String(Math.floor((s % 3600) / 60)).padStart(2, "0");
+  const sec = String(s % 60).padStart(2, "0");
+  return `${h}:${m}:${sec}`;
 }
 
-function getClients() {
-  return JSON.parse(localStorage.getItem("clients") || "[]");
+function actualizarTimer() {
+  timer.textContent = formatear(Date.now() - inicio);
 }
 
-function setActivity(a) {
-  activity = a;
-}
+document.querySelectorAll("[data-activity]").forEach(btn => {
+  btn.onclick = () => {
+    if (!cliente) return alert("Selecciona cliente primero");
+    actividad = btn.dataset.activity;
+    activityName.textContent = actividad;
+    document.querySelectorAll("[data-activity]").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+  };
+});
 
-function newClient() {
-  const clients = getClients();
-  if (!isActivated() && clients.length >= LIMIT) {
-    alert("Versión de prueba: máximo 2 clientes.");
+document.getElementById("btnNuevo").onclick = () => {
+  if (clientesGuardados.length >= 2) {
+    alert("Versión de prueba: máximo 2 clientes");
     return;
   }
-  const name = prompt("Nombre cliente:");
-  if (!name) return;
-  currentClient = name;
-  startTime = Date.now();
-  document.getElementById("status").innerText = "Cliente: " + name;
-  startTimer();
-}
+  const nombre = prompt("Nombre del cliente:");
+  if (!nombre) return;
 
-function startTimer() {
+  cliente = nombre;
+  clientesGuardados.push(nombre);
+  localStorage.setItem("clientes", JSON.stringify(clientesGuardados));
+
+  inicio = Date.now();
+  timerInterval = setInterval(actualizarTimer, 1000);
+
+  clientName.textContent = "Cliente: " + cliente;
+};
+
+document.getElementById("btnCambiar").onclick = () => {
+  const nombre = prompt("Cambiar a cliente:");
+  if (!nombre) return;
+  cliente = nombre;
+  inicio = Date.now();
+  clientName.textContent = "Cliente: " + cliente;
+};
+
+document.getElementById("btnCerrar").onclick = () => {
+  if (!cliente) return;
+
   clearInterval(timerInterval);
-  timerInterval = setInterval(() => {
-    const diff = Math.floor((Date.now() - startTime)/1000);
-    document.getElementById("timer").innerText = format(diff);
-  },1000);
-}
+  const total = Date.now() - inicio;
 
-function closeClient() {
-  if (!currentClient) return;
-  clearInterval(timerInterval);
-  const seconds = Math.floor((Date.now() - startTime)/1000);
-  const clients = getClients();
-  clients.push({
-    date: new Date().toISOString().slice(0,10),
-    client: currentClient,
-    activity,
-    seconds
+  reportes.push({
+    fecha: new Date().toISOString().slice(0, 10),
+    cliente,
+    actividad,
+    tiempo: total
   });
-  localStorage.setItem("clients", JSON.stringify(clients));
 
-  const msg = document.getElementById("message");
-  msg.style.display="block";
-  msg.innerText = "Cliente cerrado: " + currentClient + " ("+format(seconds)+")";
+  localStorage.setItem("reportes", JSON.stringify(reportes));
 
-  currentClient=null;
-  document.getElementById("status").innerText="Sin cliente activo";
-  document.getElementById("timer").innerText="00:00:00";
-}
+  info.innerHTML = `✔ Cliente cerrado<br>
+  Cliente: ${cliente}<br>
+  Tiempo total: ${formatear(total)}<br>
+  <span style="color:#2ecc71">Tiempo listo para facturación</span>`;
 
-function format(s){
-  const h=String(Math.floor(s/3600)).padStart(2,'0');
-  const m=String(Math.floor((s%3600)/60)).padStart(2,'0');
-  const ss=String(s%60).padStart(2,'0');
-  return `${h}:${m}:${ss}`;
-}
+  cliente = null;
+  actividad = null;
+  inicio = null;
+  timer.textContent = "00:00:00";
+  clientName.textContent = "Sin cliente activo";
+  activityName.textContent = "—";
+};
 
-function downloadReport() {
-  const data = getClients();
-  if (!data.length) return alert("Sin datos");
-  let csv = "Fecha,Cliente,Actividad,Segundos,HH:MM:SS\n";
-  data.forEach(r=>{
-    csv += `${r.date},${r.client},${r.activity},${r.seconds},${format(r.seconds)}\n`;
+document.getElementById("btnReporte").onclick = () => {
+  let csv = "Fecha,Cliente,Actividad,Tiempo\n";
+  reportes.forEach(r => {
+    csv += `${r.fecha},${r.cliente},${r.actividad},${formatear(r.tiempo)}\n`;
   });
-  const blob = new Blob([csv],{type:"text/csv"});
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download="focowork_reporte.csv";
+
+  const blob = new Blob([csv], { type: "text/csv" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "reporte_focowork.csv";
   a.click();
-}
+};
 
-function activate() {
-  const code = prompt("Introduce el código de activación:");
-  if (code === ACTIVATION_CODE) {
-    localStorage.setItem("focowork_activated","true");
-    alert("✅ FocoWork activado correctamente");
-    document.getElementById("trialBox").style.display="none";
-  } else {
-    alert("❌ Código incorrecto");
-  }
-}
-
-window.onload = () => {
-  if (isActivated()) {
-    document.getElementById("trialBox").style.display="none";
-  }
+document.getElementById("btnEnfoque").onclick = () => {
+  enfoque = !enfoque;
+  document.body.classList.toggle("enfoque", enfoque);
+  document.getElementById("btnEnfoque").classList.toggle("active", enfoque);
+  alert(enfoque ? "🎯 Enfoque activado" : "🎯 Enfoque desactivado");
 };
