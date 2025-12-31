@@ -33,7 +33,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const { blocks } = getCurrentState();
     const now = Date.now();
     let total = 0;
-
     blocks.forEach(b => {
       if (b.cliente_id === clientId) {
         total += (b.fin ?? now) - b.inicio;
@@ -78,14 +77,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  btnNew?.addEventListener("click", () => {
+  btnNew.addEventListener("click", () => {
     const name = prompt("Nombre del cliente:");
     if (!name) return;
     newClient(name.trim());
     updateUI("trabajo");
   });
 
-  btnChange?.addEventListener("click", () => {
+  btnChange.addEventListener("click", () => {
     const { clients } = getCurrentState();
     const abiertos = clients.filter(c => c.estado === "abierto");
     if (!abiertos.length) return;
@@ -99,16 +98,16 @@ document.addEventListener("DOMContentLoaded", () => {
     updateUI("trabajo");
   });
 
-  btnClose?.addEventListener("click", () => {
+  btnClose.addEventListener("click", () => {
     closeClient();
     updateUI(null);
   });
 
-  btnFocus?.addEventListener("click", () => {
-    alert("🎯 Modo enfoque activo");
+  btnFocus.addEventListener("click", () => {
+    alert("🎯 Enfoque");
   });
 
-  btnReport?.addEventListener("click", () => {
+  btnReport.addEventListener("click", () => {
     const { blocks } = getCurrentState();
     if (!blocks.length) return alert("Sin datos");
 
